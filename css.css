@@ -1,4 +1,23 @@
-canvas{
-    border: 1px solid black;
+body {
+  display: grid;
+  grid-template-rows: 20px 1fr;
+  grid-template-areas:
+            "logo"
+            "center";
+}
 
+.logo {
+  grid-area: logo;
+  text-align: center;
+}
+
+
+
+.center {
+  grid-area: center;
+
+}
+
+canvas {
+  border: 1px solid black;
 }
