@@ -3,20 +3,90 @@ function draw() {
   let cnv = document.getElementById('MyCanvas');
   let ctx = cnv.getContext('2d');
   let ships = [];
+  let enemyShips = [];
   let field = [];
+  let ports = [];
+  let buttons = [];
+  let enemyField = [];
+
   cnv.width = 1300;
   cnv.height = 1000;
 
   ctx.strokeStyle = "black";
-  ctx.lineWidth = 6;
+  ctx.lineWidth = 3;
 
-  let Ship = function (x, y, w, h,) {
+  let selected = false;
+  let mouse = {
+    x: 0,
+    y: 0,
+  }
+
+  let Port = function (x, y, w, h) {
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
-    this.selected = false;
+    this.isEmpty = true;
   }
+  Port.prototype = {
+    draw: function () {
+      fillPort(this.x, this.y, this.w, this.h)
+    },
+    stroke: function () {
+      strokePort(this.x, this.y, this.w, this.h)
+    },
+    select: function () {
+      this.isEmpty = !this.isEmpty;
+    }
+  }
+
+  function doPorts(x, y) {
+    ports = [];
+    ports.push(new Port(x, y, 30, 30))
+    ports.push(new Port(x, y + 35, 65, 65))
+    ports.push(new Port(x, y + 3 * 35, 100, 100))
+    ports.push(new Port(x, y + 6 * 35, 135, 135))
+  }
+
+  let ButtonNext = function (x, y, w, h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.isEmpty = false;
+  }
+  ButtonNext.prototype = {
+    draw: function () {
+      fillButtonNext(this.x, this.y, this.w, this.h)
+    },
+    stroke: function () {
+      strokeButtonNext(this.x, this.y, this.w, this.h)
+    },
+    select: function () {
+      this.isEmpty = !this.isEmpty;
+    }
+  }
+
+
+  let Ship = function (x, y, h, deck) {
+    this.x = x;
+    this.y = y;
+    this.w = deck * 30 + (deck - 1) * 5;
+    this.h = h;
+    this.top = this.y;
+    this.bottom = this.y + this.h;
+    this.right = this.x + this.w;
+    this.left = this.x;
+    this.deck = deck;
+    this.selected = false;
+    this.onField = false;
+  }
+
+  function doButtonNext(x, y, w, h) {
+    buttons = [];
+    buttons.push(new ButtonNext(x, y, w, h))
+  }
+
 
   Ship.prototype = {
     draw: function () {
@@ -30,46 +100,35 @@ function draw() {
     }
   };
 
+  // Создание кораблей
   function doShips() {
     ships = [];
+    enemyShips = [];
 
+    for (let i = 0; i < 4; i++) {
 
-    ships.push(new Ship(500, 100, 30, 30))
-    ships.push(new Ship(500 + 35, 100, 30, 30))
-    ships.push(new Ship(500 + 70, 100, 30, 30))
-    ships.push(new Ship(500 + 105, 100, 30, 30))
-
-    ships.push(new Ship(500, 100 + 35, 60, 30))
-    ships.push(new Ship(500 + 70, 100 + 35, 60, 30))
-    ships.push(new Ship(500 + 140, 100 + 35, 60, 30))
-
-    ships.push(new Ship(500, 100 + 2 * 35, 90, 30))
-    ships.push(new Ship(500 + 105, 100 + 2 * 35, 90, 30))
-
-    ships.push(new Ship(500, 100 + 3 * 35, 120, 30))
-    update();
+      for (let j = 4; i < j; j--) {
+        ships.push(new Ship(ports[i].x, ports[i].y, 30, i + 1))
+        enemyShips.push(new Ship(ports[i].x, ports[i].y, 30, i + 1))
+      }
+    }
 
   }
 
-  let selected = false;
-
-  let mouse = {
-    x: 0,
-    y: 0,
-
-  }
 
   class Menu {
     constructor(elem) {
       this._elem = elem;
-      elem.onclick = this.onClick.bind(this); // (*)
+      elem.onclick = this.onClick.bind(this);
     }
 
     doField(matrix) {
       field = [];
+      enemyField = [];
       for (let i = 0; i < matrix; i++) {
         for (let j = 0; j < matrix; j++) {
           field.push(new Cell(10 + j * 35, 10 + i * 35, 30, 30))
+          enemyField.push(new Cell(700 + j * 35, 10 + i * 35, 30, 30))
         }
       }
       update();
@@ -79,7 +138,10 @@ function draw() {
       let action = event.target.dataset.action;
       if (action) {
         this["doField"](action);
+
+        doPorts(Math.sqrt(field.length) * 38, 20);
         doShips();
+        doButtonNext(Math.sqrt(field.length) * 38, field.length, 100, 30)
 
       }
     };
@@ -92,22 +154,42 @@ function draw() {
     this.y = y;
     this.w = w;
     this.h = h;
-    this.selected = false;
+    this.selected = this.bisy;
+    this.bisy = false;
   };
 
   let fillRect = (x, y, w, h) => {
     ctx.fillStyle = "blue";
     ctx.fillRect(x, y, w, h)
   }
+  let fillPort = (x, y, w, h) => {
+    ctx.fillStyle = "white"
+    ctx.fillRect(x, y, w, h);
+  }
   let fillShip = (x, y, w, h) => {
     ctx.fillStyle = "red";
     ctx.fillRect(x, y, w, h);
   }
+  let fillButtonNext = (x, y, w, h) => {
+    ctx.fillStyle = "red";
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "black";
+    ctx.font = "bold 30px serif";
+    ctx.fillText("Battle!", x + 5, y + h - 5)
+
+  }
+
 
   let strokeRect = (x, y, w, h) => {
     ctx.strokeRect(x, y, w, h)
   }
+  let strokePort = (x, y, w, h) => {
+    ctx.strokeRect(x, y, w, h)
+  }
   let strokeShip = (x, y, w, h) => {
+    ctx.strokeRect(x, y, w, h)
+  }
+  let strokeButtonNext = (x, y, w, h) => {
     ctx.strokeRect(x, y, w, h)
   }
 
@@ -129,15 +211,64 @@ function draw() {
         y > cell.y && y < cell.y + cell.h;
   };
 
-  cnv.onclick = function (e) {
-    let x = e.clientX - cnv.offsetLeft;
-    let y = e.clientY - cnv.offsetTop;
-    for (let cell in field) {
-      if (isCursorInCell(x, y, field[cell])) {
-        field[cell].select();
+  window.onkeyup = function (e) {
+
+    for (let ship of ships) {
+      if (isCursorInShip(ship) && e.code == "ArrowUp" && (ship.onField == false)) {
+        let tmp = ship.h
+        ship.h = ship.w;
+        ship.w = tmp;
       }
     }
     update();
+
+  }
+
+  cnv.oncontextmenu = function (e) {
+
+    if (buttons[0] && buttons[0].isEmpty==false){
+
+      randomField(field, ships);
+    }
+    return false;
+
+  }
+
+  function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min; //Максимум не включается, минимум включается
+  }
+
+  let randomField = function (field, ships) {
+
+    for (let ship of ships) {
+      ship.onField = false;
+      if (Math.random() > 0.4) {
+        let tmp = ship.h
+        ship.h = ship.w;
+        ship.w = tmp;
+      }
+    }
+
+    while (ships.find(item => item.onField == false)) {
+
+      for (let ship of ships) {
+        let r = getRandomInt(0, field.length);
+
+          if (isBisy(field, r, ship.deck, ship)) {
+            debugger;
+            ship.x = field[r].x;
+            ship.y = field[r].y;
+            ship.onField = true;
+
+
+
+          update()
+        }
+      }
+    }
+
   }
 
   let isCursorInShip = function (ship) {
@@ -145,54 +276,322 @@ function draw() {
         mouse.y > ship.y && mouse.y < ship.y + ship.h;
   }
 
-  function update() {
-
-    ctx.clearRect(0, 0, cnv.width, cnv.height)
-    for (let i in field) {
-      field[i].draw();
-      if (field[i].selected) {
-        field[i].stroke()
-      }
-    }
-
-    for (let ship in ships) {
-      ships[ship].draw();
-
-      if (isCursorInShip(ships[ship])) {
-        ships[ship].stroke();
-      }
-
-      if (selected) {
-        selected.x = mouse.x - selected.w / 2
-        selected.y = mouse.y - selected.h / 2
-      }
-    }
-
-
+  let isShipOnCell = function (ship, cell) {
+    return cell.x >= ship.x && cell.x + cell.w <= ship.x + ship.w &&
+        cell.y >= ship.y && cell.y + cell.h <= ship.y + ship.h
   }
 
-  window.onmousedown = function () {
+  function employmentCheck(field, ships) {
 
-    if (!selected) {
-      for (let ship in ships) {
-        if (isCursorInShip(ships[ship])) {
-          selected = ships[ship]
+    let rowL = Math.sqrt(field.length);
+
+    for (let i = 0; field.length > i; i++) {
+      for (let ship of ships) {
+
+
+        if (isShipOnCell(ship, field[i]) && ship.onField == true) {   //занятость клеток под кораблями
+          field[i].bisy = true;
+          field[i].selected = true;
+          break;
+        }
+        if (!isShipOnCell(ship, field[i])) {
+          field[i].selected = false;
+          field[i].bisy = false;
+
         }
       }
 
+           if (selected.x !== field[i].x && selected.y !== field[i].y) {
+                selected.onField = false;
+              }
+
+
+      if ((i > Math.sqrt(field.length)) &&
+          (i < (field.length - 1 - Math.sqrt(field.length)))) {
+
+        if (((field[i + 1].bisy == true) && (Math.floor((i) / rowL) == Math.floor((i + 1) / rowL))) ||
+            ((field[i - 1].bisy == true) && (Math.floor((i) / rowL) == Math.floor((i - 1) / rowL))) ||
+            ((field[i + Math.sqrt(field.length)].bisy == true)) ||
+            (field[i - Math.sqrt(field.length)].bisy == true) ||
+
+            ((field[i - Math.sqrt(field.length) + 1].bisy == true) &&
+                (Math.floor((i - Math.sqrt(field.length)) / rowL) == Math.floor((i - Math.sqrt(field.length) + 1) / rowL))) ||
+
+            ((field[i - Math.sqrt(field.length) - 1].bisy == true) &&
+                (Math.floor((i - Math.sqrt(field.length)) / rowL) == Math.floor((i - Math.sqrt(field.length) - 1) / rowL))) ||
+
+            ((field[i + Math.sqrt(field.length) - 1].bisy == true)
+                && (Math.floor((i + Math.sqrt(field.length)) / rowL) == Math.floor((i + Math.sqrt(field.length) - 1) / rowL))) ||
+
+            (((field[i + Math.sqrt(field.length) + 1].bisy == true))
+                && (Math.floor((i + Math.sqrt(field.length)) / rowL) == Math.floor((i + Math.sqrt(field.length) + 1) / rowL)))) {
+
+          field[i].selected = true;
+
+        }
+      }
+      // first row
+      else if ((i > 0) && (i < Math.sqrt(field.length) - 1)) {
+
+        if (((field[i + 1].bisy == true)) ||
+            ((field[i - 1].bisy == true)) ||
+
+            ((field[i + Math.sqrt(field.length)].bisy == true)) ||
+            ((field[i + Math.sqrt(field.length) - 1].bisy == true)) ||
+
+            (((field[i + Math.sqrt(field.length) + 1].bisy == true)))) {
+
+          field[i].selected = true;
+
+        }
+      }
+      // last row
+      else if ((i < field.length - 1) && (i > field.length - rowL)) {
+        if ((field[i + 1].bisy == true) || ((field[i - 1].bisy == true)) ||
+
+            ((field[i - Math.sqrt(field.length)].bisy == true)) ||
+            ((field[i - Math.sqrt(field.length) - 1].bisy == true)) ||
+            ((field[i - Math.sqrt(field.length) + 1].bisy == true))) {
+
+          field[i].selected = true;
+
+        }
+      }
+      //left top
+      else if (i == 0) {
+        if (((field[i + 1].bisy == true)) ||
+
+            ((field[i + Math.sqrt(field.length)].bisy == true)) ||
+
+            (((field[i + Math.sqrt(field.length) + 1].bisy == true)))) {
+
+          field[i].selected = true;
+
+        }
+      }
+      // right top
+      else if (i == Math.sqrt(field.length) - 1) {
+        if (((field[i - 1].bisy == true)) ||
+
+            ((field[i + Math.sqrt(field.length)].bisy == true)) ||
+
+            ((field[i + Math.sqrt(field.length) - 1].bisy == true))) {
+
+          field[i].selected = true;
+
+        }
+      }
+      //right down
+      else if (i == field.length - 1) {
+        if (((field[i - 1].bisy == true)) ||
+
+            ((field[i - Math.sqrt(field.length)].bisy == true)) ||
+
+            (((field[i - Math.sqrt(field.length) - 1].bisy == true)))) {
+
+          field[i].selected = true;
+
+        }
+      }
+      //left down
+      else if (i == field.length - rowL) {
+        if (
+            (field[i + 1].bisy == true) ||
+
+            (field[i - rowL].bisy == true) ||
+
+            (field[i - rowL + 1].bisy == true)
+        ) {
+
+          field[i].selected = true;
+
+        }
+      }
+      //left er
+      else if (i == rowL) {
+        if (
+            (field[i + 1].bisy == true) ||
+
+            (field[i + Math.sqrt(field.length)].bisy == true) ||
+
+            (field[i + Math.sqrt(field.length) + 1].bisy == true) ||
+
+            (field[i - rowL].bisy == true) ||
+
+            (field[i - rowL + 1].bisy == true)
+
+        ) {
+          field[i].selected = true;
+        }
+      }
+      //right er
+      else if (i == field.length - 1 - rowL) {
+        if (
+            (field[i - 1].bisy == true) ||
+
+            (field[i + Math.sqrt(field.length)].bisy == true) ||
+
+            (field[i + Math.sqrt(field.length) - 1].bisy == true) ||
+
+            (field[i - rowL].bisy == true) ||
+
+            (field[i - rowL - 1].bisy == true)
+
+        ) {
+          field[i].selected = true;
+        }
+      } else {
+        field[i].selected = false;
+      }
+
     }
   }
 
-  window.onmouseup = function () {
+  let rand = false; // opt
+  function update() {
+    ctx.clearRect(0, 0, cnv.width, cnv.height)
 
+    for (let cell of field) {
+      cell.draw();
+      if (cell.selected) {
+        cell.stroke()
+      }
+    }
+
+
+    for (let port of ports) {
+      port.draw();
+    }
+
+    if (buttons[0] && buttons[0].isEmpty == true) {
+
+      for (let eCell of enemyField) {
+        employmentCheck(enemyField, enemyShips);
+        eCell.draw();
+        if (eCell.selected) {
+          eCell.stroke()
+        }
+      }
+
+
+
+      for (let eShip of enemyShips) {
+        eShip.draw();
+        if (!eShip.onField) {
+          eShip.x = ports[eShip.deck - 1].x;
+          eShip.y = ports[eShip.deck - 1].y;
+        }
+      }
+      if (rand == false) {
+
+        rand = true;
+        randomField(enemyField, enemyShips);
+      }
+    }
+
+    for (let ship of ships) {
+      ship.draw();
+
+      if (isCursorInShip(ship)) {
+        ship.stroke();
+      }
+      if ((!ships.find(item => item.onField == false) && buttons[0].isEmpty == false)) {
+        buttons[0].stroke();
+        buttons[0].draw();
+      }
+
+      if (selected) {
+        if (selected.w > selected.h) {
+          selected.x = mouse.x - 15;
+          selected.y = mouse.y - selected.h / 3;
+        } else {
+          selected.y = mouse.y - 15;
+          selected.x = mouse.x - selected.w / 3;
+        }
+
+      }
+
+      //если корабль не на поле
+      if (!ship.onField) {
+        ship.x = ports[ship.deck - 1].x;
+        ship.y = ports[ship.deck - 1].y;
+      }
+
+
+      //проверка занятости клеток
+      employmentCheck(field, ships)
+
+
+    }
+
+
+  }
+
+  cnv.onclick = function (e) {
+    for (let b of buttons) {
+      if (isCursorInShip(b)) {
+        b.isEmpty = true;
+      }
+
+    }
+  }
+
+  window.onmousedown = function () {
+    if (!selected) {
+      for (let ship of ships) {
+        if (isCursorInShip(ship)) {
+          selected = ship
+        }
+
+      }
+
+    }
+  }
+
+
+  let isBisy = function (mass, n, p, ship) {
+
+    let rowL = Math.sqrt(mass.length);
+    while (p - 1 >= 0) {
+
+
+      if (ship.w < ship.h) {
+
+        if ((mass[n + (p - 1) * rowL] == undefined) || (mass[n + (p - 1) * rowL].selected == true)) {
+          return false;
+        }
+
+      } else {
+        if ((mass[n + p - 1] == undefined) || (mass[n + p - 1].selected == true)
+            || (Math.floor(n / rowL) != Math.floor((n + p - 1) / rowL))) {
+          return false;
+        }
+      }
+      p--;
+    }
+
+    return true
+  }
+
+
+  window.onmouseup = function (e) {
+    let x = e.pageX - cnv.offsetLeft;
+    let y = e.pageY - cnv.offsetTop;
+
+    for (let i = 0; i < field.length; i++) {
+      if (isCursorInCell(x, y, field[i]) && field[i].bisy == false && isBisy(field, i, selected.deck, selected)) {
+        selected.x = field[i].x;
+        selected.y = field[i].y;
+        selected.onField = true;
+      }
+    }
     selected = false;
-    update()
   }
 
 
   window.onmousemove = function (e) {
-    mouse.x = e.clientX - cnv.offsetLeft;
-    mouse.y = e.clientY - cnv.offsetTop;
+    mouse.x = e.pageX - cnv.offsetLeft;
+    mouse.y = e.pageY - cnv.offsetTop;
   }
 
 
