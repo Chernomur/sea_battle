@@ -9,6 +9,8 @@ function draw() {
   let buttons = [];
   let enemyField = [];
 
+  let canMove = true;
+
   cnv.width = 1300;
   cnv.height = 1000;
 
@@ -80,6 +82,8 @@ function draw() {
     this.deck = deck;
     this.selected = false;
     this.onField = false;
+    this.hit = deck;
+    this.kill = false;
   }
 
   function doButtonNext(x, y, w, h) {
@@ -97,7 +101,13 @@ function draw() {
     },
     select: function () {
       this.selected = !this.selected;
-    }
+    },
+    hitting: function () {
+      this.hit--;
+    },
+    killing: function () {
+      this.kill = true;
+    },
   };
 
   // Создание кораблей
@@ -127,8 +137,8 @@ function draw() {
       enemyField = [];
       for (let i = 0; i < matrix; i++) {
         for (let j = 0; j < matrix; j++) {
-          field.push(new Cell(10 + j * 35, 10 + i * 35, 30, 30))
-          enemyField.push(new Cell(700 + j * 35, 10 + i * 35, 30, 30))
+          field.push(new Cell(10 + j * 35, 10 + i * 35, 30, 30, "blue"))
+          enemyField.push(new Cell(700 + j * 35, 10 + i * 35, 30, 30, "gray"))
         }
       }
       update();
@@ -149,17 +159,20 @@ function draw() {
 
   new Menu(menu);
 
-  let Cell = function (x, y, w, h) {
+  let Cell = function (x, y, w, h, color) {
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
     this.selected = this.bisy;
     this.bisy = false;
+    this.color = color;
+    this.shot = false;
+    this.kill = false;
   };
 
-  let fillRect = (x, y, w, h) => {
-    ctx.fillStyle = "blue";
+  let fillRect = (x, y, w, h, color) => {
+    ctx.fillStyle = color;
     ctx.fillRect(x, y, w, h)
   }
   let fillPort = (x, y, w, h) => {
@@ -196,7 +209,7 @@ function draw() {
 
   Cell.prototype = {
     draw: function () {
-      fillRect(this.x, this.y, this.w, this.h)
+      fillRect(this.x, this.y, this.w, this.h, this.color)
     },
     stroke: function () {
       strokeRect(this.x, this.y, this.w, this.h)
@@ -226,7 +239,7 @@ function draw() {
 
   cnv.oncontextmenu = function (e) {
 
-    if (buttons[0] && buttons[0].isEmpty==false){
+    if (buttons[0] && buttons[0].isEmpty == false) {
 
       randomField(field, ships);
     }
@@ -256,12 +269,11 @@ function draw() {
       for (let ship of ships) {
         let r = getRandomInt(0, field.length);
 
-          if (isBisy(field, r, ship.deck, ship)) {
-            debugger;
-            ship.x = field[r].x;
-            ship.y = field[r].y;
-            ship.onField = true;
+        if (isBisy(field, r, ship.deck, ship)) {
 
+          ship.x = field[r].x;
+          ship.y = field[r].y;
+          ship.onField = true;
 
 
           update()
@@ -292,18 +304,20 @@ function draw() {
         if (isShipOnCell(ship, field[i]) && ship.onField == true) {   //занятость клеток под кораблями
           field[i].bisy = true;
           field[i].selected = true;
+          field[i].kill = true;
           break;
         }
         if (!isShipOnCell(ship, field[i])) {
           field[i].selected = false;
           field[i].bisy = false;
-
+          field[i].kill = false;
         }
+
       }
 
-           if (selected.x !== field[i].x && selected.y !== field[i].y) {
-                selected.onField = false;
-              }
+      if (selected.x !== field[i].x && selected.y !== field[i].y) {
+        selected.onField = false;
+      }
 
 
       if ((i > Math.sqrt(field.length)) &&
@@ -327,7 +341,6 @@ function draw() {
                 && (Math.floor((i + Math.sqrt(field.length)) / rowL) == Math.floor((i + Math.sqrt(field.length) + 1) / rowL)))) {
 
           field[i].selected = true;
-
         }
       }
       // first row
@@ -468,15 +481,25 @@ function draw() {
       for (let eCell of enemyField) {
         employmentCheck(enemyField, enemyShips);
         eCell.draw();
+        if (isCursorInShip(eCell)) {
+          eCell.stroke();
+        }
         if (eCell.selected) {
-          eCell.stroke()
+          // eCell.stroke()
         }
       }
 
 
-
       for (let eShip of enemyShips) {
-        eShip.draw();
+
+        if (eShip.hit == 0) {
+          eShip.killing();
+        }
+        if (eShip.kill == true) {
+          eShip.draw();
+        }
+
+
         if (!eShip.onField) {
           eShip.x = ports[eShip.deck - 1].x;
           eShip.y = ports[eShip.deck - 1].y;
@@ -490,7 +513,12 @@ function draw() {
     }
 
     for (let ship of ships) {
-      ship.draw();
+      //ship.draw();
+
+      if (ship.hit <= 0) {
+        ship.killing();
+        ship.draw();
+      }
 
       if (isCursorInShip(ship)) {
         ship.stroke();
@@ -516,13 +544,40 @@ function draw() {
         ship.x = ports[ship.deck - 1].x;
         ship.y = ports[ship.deck - 1].y;
       }
-
-
       //проверка занятости клеток
       employmentCheck(field, ships)
 
+    }
+//////////////////////////Убрать зацикливания
+      while (canMove == false){
+
+      let r = getRandomInt(0, field.length);
+      while (field[r].shot==false) {
+        for (let ship of ships) {
+
+          if (isShipOnCell(ship, field[r])) {
+            field[r].shot = true;
+            ship.hitting();
+            field[r].color = "darkorange";
+            break;
+
+          } else if (!(isShipOnCell(ship, field[r]))) {
+            field[r].shot = true;
+            field[r].color = "midnightblue";
+            canMove = true;
+          }
+
+        }
+        if ((ships.find(item => item.onField == false)))
+          break;
+      }
+        if ((ships.find(item => item.onField == false))){
+
+          break;
+      }
 
     }
+    canMove=true;
 
 
   }
@@ -586,6 +641,25 @@ function draw() {
       }
     }
     selected = false;
+
+    for (let eCell of enemyField) {
+
+      for (let eShip of enemyShips) {
+        if ((isCursorInCell(x, y, eCell)) && isShipOnCell(eShip, eCell) && (canMove == true)) {
+          eCell.shot = true;
+          eShip.hitting();
+          eCell.color = "darkorange";
+
+        } else if ((isCursorInCell(x, y, eCell)) && (eCell.bisy == false) && (canMove == true)) {
+          eCell.shot = true;
+          eCell.color = "midnightblue";
+          canMove=false;
+        }
+
+      }
+
+    }
+
   }
 
 
