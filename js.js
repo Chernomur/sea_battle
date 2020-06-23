@@ -83,6 +83,7 @@ function draw() {
     this.selected = false;
     this.onField = false;
     this.hit = deck;
+    this.damaged = false;
     this.kill = false;
   }
 
@@ -293,7 +294,7 @@ function draw() {
         cell.y >= ship.y && cell.y + cell.h <= ship.y + ship.h
   }
 
-  function employmentCheck(field, ships) {
+  function employmentCheck(field, ships, string = "bisy") {
 
     let rowL = Math.sqrt(field.length);
 
@@ -304,13 +305,16 @@ function draw() {
         if (isShipOnCell(ship, field[i]) && ship.onField == true) {   //занятость клеток под кораблями
           field[i].bisy = true;
           field[i].selected = true;
-          field[i].kill = true;
+          if (ship.kill == true) {
+            field[i].kill = true;
+          }
           break;
         }
+
         if (!isShipOnCell(ship, field[i])) {
           field[i].selected = false;
           field[i].bisy = false;
-          field[i].kill = false;
+
         }
 
       }
@@ -323,100 +327,122 @@ function draw() {
       if ((i > Math.sqrt(field.length)) &&
           (i < (field.length - 1 - Math.sqrt(field.length)))) {
 
-        if (((field[i + 1].bisy == true) && (Math.floor((i) / rowL) == Math.floor((i + 1) / rowL))) ||
-            ((field[i - 1].bisy == true) && (Math.floor((i) / rowL) == Math.floor((i - 1) / rowL))) ||
-            ((field[i + Math.sqrt(field.length)].bisy == true)) ||
-            (field[i - Math.sqrt(field.length)].bisy == true) ||
+        if (((field[i + 1][string] == true) && (Math.floor((i) / rowL) == Math.floor((i + 1) / rowL))) ||
+            ((field[i - 1][string] == true) && (Math.floor((i) / rowL) == Math.floor((i - 1) / rowL))) ||
+            ((field[i + Math.sqrt(field.length)][string] == true)) ||
+            (field[i - Math.sqrt(field.length)][string] == true) ||
 
-            ((field[i - Math.sqrt(field.length) + 1].bisy == true) &&
+            ((field[i - Math.sqrt(field.length) + 1][string] == true) &&
                 (Math.floor((i - Math.sqrt(field.length)) / rowL) == Math.floor((i - Math.sqrt(field.length) + 1) / rowL))) ||
 
-            ((field[i - Math.sqrt(field.length) - 1].bisy == true) &&
+            ((field[i - Math.sqrt(field.length) - 1][string] == true) &&
                 (Math.floor((i - Math.sqrt(field.length)) / rowL) == Math.floor((i - Math.sqrt(field.length) - 1) / rowL))) ||
 
-            ((field[i + Math.sqrt(field.length) - 1].bisy == true)
+            ((field[i + Math.sqrt(field.length) - 1][string] == true)
                 && (Math.floor((i + Math.sqrt(field.length)) / rowL) == Math.floor((i + Math.sqrt(field.length) - 1) / rowL))) ||
 
-            (((field[i + Math.sqrt(field.length) + 1].bisy == true))
+            (((field[i + Math.sqrt(field.length) + 1][string] == true))
                 && (Math.floor((i + Math.sqrt(field.length)) / rowL) == Math.floor((i + Math.sqrt(field.length) + 1) / rowL)))) {
 
           field[i].selected = true;
+          if (string == "kill") {
+            field[i].shot = true;
+          }
         }
       }
       // first row
       else if ((i > 0) && (i < Math.sqrt(field.length) - 1)) {
 
-        if (((field[i + 1].bisy == true)) ||
-            ((field[i - 1].bisy == true)) ||
+        if (((field[i + 1][string] == true)) ||
+            ((field[i - 1][string] == true)) ||
 
-            ((field[i + Math.sqrt(field.length)].bisy == true)) ||
-            ((field[i + Math.sqrt(field.length) - 1].bisy == true)) ||
+            ((field[i + Math.sqrt(field.length)][string] == true)) ||
+            ((field[i + Math.sqrt(field.length) - 1][string] == true)) ||
 
-            (((field[i + Math.sqrt(field.length) + 1].bisy == true)))) {
+            (((field[i + Math.sqrt(field.length) + 1][string] == true)))) {
 
           field[i].selected = true;
+          if (string == "kill") {
+            field[i].shot = true;
+          }
 
         }
       }
       // last row
       else if ((i < field.length - 1) && (i > field.length - rowL)) {
-        if ((field[i + 1].bisy == true) || ((field[i - 1].bisy == true)) ||
+        if ((field[i + 1][string] == true) || ((field[i - 1][string] == true)) ||
 
-            ((field[i - Math.sqrt(field.length)].bisy == true)) ||
-            ((field[i - Math.sqrt(field.length) - 1].bisy == true)) ||
-            ((field[i - Math.sqrt(field.length) + 1].bisy == true))) {
+            ((field[i - Math.sqrt(field.length)][string] == true)) ||
+            ((field[i - Math.sqrt(field.length) - 1][string] == true)) ||
+            ((field[i - Math.sqrt(field.length) + 1][string] == true))) {
 
           field[i].selected = true;
+          if (string == "kill") {
+            field[i].shot = true;
+          }
+
 
         }
       }
       //left top
       else if (i == 0) {
-        if (((field[i + 1].bisy == true)) ||
+        if (((field[i + 1][string] == true)) ||
 
-            ((field[i + Math.sqrt(field.length)].bisy == true)) ||
+            ((field[i + Math.sqrt(field.length)][string] == true)) ||
 
-            (((field[i + Math.sqrt(field.length) + 1].bisy == true)))) {
+            (((field[i + Math.sqrt(field.length) + 1][string] == true)))) {
 
           field[i].selected = true;
+          if (string == "kill") {
+            field[i].shot = true;
+          }
 
         }
       }
       // right top
       else if (i == Math.sqrt(field.length) - 1) {
-        if (((field[i - 1].bisy == true)) ||
+        if (((field[i - 1][string] == true)) ||
 
-            ((field[i + Math.sqrt(field.length)].bisy == true)) ||
+            ((field[i + Math.sqrt(field.length)][string] == true)) ||
 
-            ((field[i + Math.sqrt(field.length) - 1].bisy == true))) {
+            ((field[i + Math.sqrt(field.length) - 1][string] == true))) {
 
           field[i].selected = true;
+          if (string == "kill") {
+            field[i].shot = true;
+          }
 
         }
       }
       //right down
       else if (i == field.length - 1) {
-        if (((field[i - 1].bisy == true)) ||
+        if (((field[i - 1][string] == true)) ||
 
-            ((field[i - Math.sqrt(field.length)].bisy == true)) ||
+            ((field[i - Math.sqrt(field.length)][string] == true)) ||
 
-            (((field[i - Math.sqrt(field.length) - 1].bisy == true)))) {
+            (((field[i - Math.sqrt(field.length) - 1][string] == true)))) {
 
           field[i].selected = true;
+          if (string == "kill") {
+            field[i].shot = true;
+          }
 
         }
       }
       //left down
       else if (i == field.length - rowL) {
         if (
-            (field[i + 1].bisy == true) ||
+            (field[i + 1][string] == true) ||
 
-            (field[i - rowL].bisy == true) ||
+            (field[i - rowL][string] == true) ||
 
-            (field[i - rowL + 1].bisy == true)
+            (field[i - rowL + 1][string] == true)
         ) {
 
           field[i].selected = true;
+          if (string == "kill") {
+            field[i].shot = true;
+          }
 
         }
       }
@@ -425,36 +451,45 @@ function draw() {
         if (
             (field[i + 1].bisy == true) ||
 
-            (field[i + Math.sqrt(field.length)].bisy == true) ||
+            (field[i + Math.sqrt(field.length)][string] == true) ||
 
-            (field[i + Math.sqrt(field.length) + 1].bisy == true) ||
+            (field[i + Math.sqrt(field.length) + 1][string] == true) ||
 
-            (field[i - rowL].bisy == true) ||
+            (field[i - rowL][string] == true) ||
 
-            (field[i - rowL + 1].bisy == true)
+            (field[i - rowL + 1][string] == true)
 
         ) {
           field[i].selected = true;
+          if (string == "kill") {
+            field[i].shot = true;
+          }
         }
       }
       //right er
       else if (i == field.length - 1 - rowL) {
         if (
-            (field[i - 1].bisy == true) ||
+            (field[i - 1][string] == true) ||
 
-            (field[i + Math.sqrt(field.length)].bisy == true) ||
+            (field[i + Math.sqrt(field.length)][string] == true) ||
 
-            (field[i + Math.sqrt(field.length) - 1].bisy == true) ||
+            (field[i + Math.sqrt(field.length) - 1][string] == true) ||
 
-            (field[i - rowL].bisy == true) ||
+            (field[i - rowL][string] == true) ||
 
-            (field[i - rowL - 1].bisy == true)
+            (field[i - rowL - 1][string] == true)
 
         ) {
           field[i].selected = true;
+          if (string == "kill") {
+            field[i].shot = true;
+          }
         }
       } else {
         field[i].selected = false;
+        if (string == "kill") {
+          field[i].shot = false;
+        }
       }
 
     }
@@ -469,6 +504,7 @@ function draw() {
       if (cell.selected) {
         cell.stroke()
       }
+
     }
 
 
@@ -479,13 +515,16 @@ function draw() {
     if (buttons[0] && buttons[0].isEmpty == true) {
 
       for (let eCell of enemyField) {
+
+        employmentCheck(enemyField, enemyShips, "kill");
         employmentCheck(enemyField, enemyShips);
         eCell.draw();
         if (isCursorInShip(eCell)) {
           eCell.stroke();
         }
-        if (eCell.selected) {
-          // eCell.stroke()
+
+        if (eCell.shot == true) {
+          eCell.stroke()
         }
       }
 
@@ -513,11 +552,18 @@ function draw() {
     }
 
     for (let ship of ships) {
-      //ship.draw();
+      ship.draw();
+
 
       if (ship.hit <= 0) {
         ship.killing();
         ship.draw();
+      }
+
+      if ((ship.hit < ship.deck) && (ship.hit > 0)) {
+        ship.damaged = true;
+      } else {
+        ship.damaged = false;
       }
 
       if (isCursorInShip(ship)) {
@@ -545,41 +591,57 @@ function draw() {
         ship.y = ports[ship.deck - 1].y;
       }
       //проверка занятости клеток
+      employmentCheck(field, ships, "kill")
       employmentCheck(field, ships)
 
-    }
-//////////////////////////Убрать зацикливания
-      while (canMove == false){
 
+    }
+
+    while ((canMove == false) && (ships.find(item => item.kill == false) != undefined)) {
+      let rluck;
       let r = getRandomInt(0, field.length);
-      while (field[r].shot==false) {
+      while (field[r].shot == false) {
         for (let ship of ships) {
 
           if (isShipOnCell(ship, field[r])) {
-            field[r].shot = true;
-            ship.hitting();
-            field[r].color = "darkorange";
+            shot(r, ship, "darkorange", false)
+            rluck = r;
             break;
 
           } else if (!(isShipOnCell(ship, field[r]))) {
-            field[r].shot = true;
-            field[r].color = "midnightblue";
-            canMove = true;
+            shot(r, ship, "midnightblue", true)
+
           }
 
         }
-        if ((ships.find(item => item.onField == false)))
-          break;
-      }
-        if ((ships.find(item => item.onField == false))){
 
-          break;
+      }
+      if ((ships.find(item => item.kill == false) == undefined)) {
+
+        break;
       }
 
     }
-    canMove=true;
 
 
+  }
+
+  function cellsUnderShip(ship, field) {
+    let mass = field.filter(function (item) {
+      if (isShipOnCell(ship, item)) {
+        return true
+      }
+      else {return false}
+
+    })
+    return mass;
+  }
+
+  function shot(r, ship, color, move) {
+    field[r].shot = true;
+    ship.hitting();
+    field[r].color = color;
+    canMove = move;
   }
 
   cnv.onclick = function (e) {
@@ -653,7 +715,7 @@ function draw() {
         } else if ((isCursorInCell(x, y, eCell)) && (eCell.bisy == false) && (canMove == true)) {
           eCell.shot = true;
           eCell.color = "midnightblue";
-          canMove=false;
+          canMove = false;
         }
 
       }
@@ -669,6 +731,6 @@ function draw() {
   }
 
 
-  setInterval(update, 30)
+  setInterval(update, 60)
 
 }
