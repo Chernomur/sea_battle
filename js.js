@@ -552,7 +552,7 @@ function draw() {
     }
 
     for (let ship of ships) {
-      ship.draw();
+      //ship.draw();
 
 
       if (ship.hit <= 0) {
@@ -598,18 +598,23 @@ function draw() {
     }
 
     while ((canMove == false) && (ships.find(item => item.kill == false) != undefined)) {
-      let rluck;
-      let r = getRandomInt(0, field.length);
+     let r = getRandomInt(0, field.length);
       while (field[r].shot == false) {
         for (let ship of ships) {
-
           if (isShipOnCell(ship, field[r])) {
-            shot(r, ship, "darkorange", false)
-            rluck = r;
+            debugger;
+            shoot(r, ship, "darkorange", false)
+         /*   field[r].shot = true;
+            ship.hitting();
+            field[r].color = "darkorange";
+            canMove = false;*/
             break;
 
           } else if (!(isShipOnCell(ship, field[r]))) {
-            shot(r, ship, "midnightblue", true)
+            shoot(r, ship, "midnightblue", true)
+            /*field[r].shot = true;
+            field[r].color = "midnightblue";
+            canMove = true;*/
 
           }
 
@@ -627,19 +632,20 @@ function draw() {
   }
 
   function cellsUnderShip(ship, field) {
-    let mass = field.filter(function (item) {
+    let mass = field.map(function (item) {
       if (isShipOnCell(ship, item)) {
-        return true
+        return item
       }
-      else {return false}
 
     })
     return mass;
   }
 
-  function shot(r, ship, color, move) {
+  function shoot(r, ship, color, move) {
     field[r].shot = true;
-    ship.hitting();
+    if (move==false) {
+      ship.hitting();
+    }
     field[r].color = color;
     canMove = move;
   }
