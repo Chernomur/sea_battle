@@ -2,6 +2,7 @@ function draw() {
 
   let cnv = document.getElementById('MyCanvas');
   let ctx = cnv.getContext('2d');
+
   let ships = [];
   let enemyShips = [];
   let field = [];
@@ -9,15 +10,19 @@ function draw() {
   let buttons = [];
   let enemyField = [];
 
+
   let r;
+  let win=undefined;
   let or;
-  let luck;
+  let counter=0;
+  let maxScore=0;
+  maxScore=localStorage.getItem('maxScore',maxScore);
 
   let canMove = true;
 
   cnv.width = 1300;
   cnv.height = 1000;
-
+  ctx.font = "30px Arial";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 3;
 
@@ -59,6 +64,7 @@ function draw() {
     this.y = y;
     this.w = w;
     this.h = h;
+    this.activation = false;
     this.isEmpty = false;
   }
   ButtonNext.prototype = {
@@ -161,7 +167,8 @@ function draw() {
         doPorts(Math.sqrt(field.length) * 38, 20);
         doShips();
         doButtonNext(Math.sqrt(field.length) * 38, field.length, 100, 30)
-
+        let div= document.getElementById("menu");
+        div.remove();
       }
     };
   }
@@ -594,6 +601,10 @@ function draw() {
       if ((!ships.find(item => item.onField == false) && buttons[0].isEmpty == false)) {
         buttons[0].stroke();
         buttons[0].draw();
+        buttons[0].activation=true;
+      }
+      else {
+        buttons[0].activation=false;
       }
 
       if (selected) {
@@ -616,82 +627,37 @@ function draw() {
       employmentCheck(field, ships, "kill")
       employmentCheck(field, ships)
 
-
-    }
-
-    /*while ((canMove == false) && (ships.find(item => item.kill == false) != undefined)) {
-      console.log("cicle0");
-      console.log(r);
-      console.log(luck);
-      let dship = ships.find(item => item.damaged == true) ;
-      if ((dship!=undefined)&&(field[r]!= undefined)){
-        r=luck;
-      }else {
-        r = getRandomInt(0, field.length);
-        or=r;
+      if (ships.find((item) => item.kill == false)==undefined){
+        if(maxScore<=counter){
+          maxScore=counter;
+          localStorage.setItem("maxScore",maxScore);
+          win=false;
+        }
       }
-
-
-      while ((field[r]!= undefined)&&(canMove == false)) {
-        console.log("cicle1");
-
-        for (let ship of ships) {
-          console.log("cicle2");
-
-
-
-          if (isShipOnCell(ship, field[r])) {
-
-            shoot(r, ship, "darkorange", false);
-            if ((field[r+1]!=undefined)&&(field[r+1].shot==false)){
-
-              luck=r+1;
-
-            }
-            else if ((field[r-1]!=undefined)&&(field[r-1].shot==false)){
-              luck=r-1;
-            }
-            else if ((field[r-10]!=undefined)&&(field[r-10].shot==false)){
-              luck=r-10;
-            }
-            else if ((field[r+10]!=undefined)&&(field[r+10].shot==false)){
-              luck=r+10;
-            }
-
-
-         /!*   field[r].shot = true;
-            ship.hitting();
-            field[r].color = "darkorange";
-            canMove = false;*!/
-            break;
-
-          } else if (!(isShipOnCell(ship, field[r]))) {
-            shoot(r, ship, "midnightblue", true);
-            console.log("cicle12");
-            luck=or;
-            /!*field[r].shot = true;
-            field[r].color = "midnightblue";
-            canMove = true;*!/
-           /!* if ((field[r-10]!=undefined)&&(field[r-10].shot==false) && (ship.damaged=true)){
-
-            }
-
-            else if ((field[r+10]!=undefined)&&(field[r+10].shot==false)&& (ship.damaged=true)){
-              luck=r+10;
-            }*!/
-
-
-          }
-
+      if (enemyShips.find((item) => item.kill == false)==undefined){
+        if(maxScore<=counter){
+          maxScore=counter;
+          localStorage.setItem("maxScore",maxScore);
+          win=true;
         }
 
       }
-      if ((ships.find(item => item.kill == false) == undefined)) {
+      ctx.fillText("Score: "+counter,10,Math.sqrt(field.length) * 38);
+      ctx.fillText("MAX score: "+maxScore,10,Math.sqrt(field.length) * 38+30);
+      if (win!=undefined){
+        if (win==true){
+          ctx.fillText("YOU WIN",10,Math.sqrt(field.length) * 38+60);
+        }
+        else {
+          ctx.fillText("YOU LOSE",10,Math.sqrt(field.length) * 38+60);
+        }
 
-        break;
       }
 
-    }*/
+
+    }
+
+
 
     while ((canMove == false) && (ships.find(item => item.kill == false) != undefined)) {
       let noShotCells = field.filter(function (item) {
@@ -795,7 +761,7 @@ function draw() {
 
   cnv.onclick = function (e) {
     for (let b of buttons) {
-      if (isCursorInShip(b)) {
+      if ((isCursorInShip(b)) && (b.activation==true)) {
         b.isEmpty = true;
       }
 
@@ -803,7 +769,7 @@ function draw() {
   }
 
   window.onmousedown = function () {
-    if (!selected) {
+    if ((!selected) && (buttons[0].isEmpty==false)) {
       for (let ship of ships) {
         if (isCursorInShip(ship)) {
           selected = ship
@@ -856,13 +822,17 @@ function draw() {
     for (let eCell of enemyField) {
 
       for (let eShip of enemyShips) {
-        if ((isCursorInCell(x, y, eCell)) && isShipOnCell(eShip, eCell) && (canMove == true)) {
+        if ((isCursorInCell(x, y, eCell)) && isShipOnCell(eShip, eCell) && (canMove == true)
+            && (buttons[0].isEmpty==true) && (eCell.shot==false)) {
           eCell.shot = true;
           eShip.hitting();
+          counter=counter+10;
           eCell.color = "darkorange";
 
-        } else if ((isCursorInCell(x, y, eCell)) && (eCell.bisy == false) && (canMove == true)) {
+        } else if ((isCursorInCell(x, y, eCell)) && (eCell.bisy == false) && (canMove == true)
+            && (buttons[0].isEmpty==true) && (eCell.shot==false)) {
           eCell.shot = true;
+          counter=counter-1;
           eCell.color = "midnightblue";
           canMove = false;
         }
