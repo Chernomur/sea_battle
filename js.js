@@ -294,7 +294,7 @@ function draw() {
             return false
           }
         });
-        debugger;
+        
         r = getRandomInt(0, noBisyCells.length);
         r=field.indexOf(noBisyCells[r]);
 
@@ -769,7 +769,7 @@ function draw() {
   }
 
   window.onmousedown = function () {
-    if ((!selected) && (buttons[0].isEmpty==false)) {
+    if ((!selected) &&  (buttons[0]!=undefined) && (buttons[0].isEmpty==false)) {
       for (let ship of ships) {
         if (isCursorInShip(ship)) {
           selected = ship
